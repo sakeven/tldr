@@ -1,63 +1,111 @@
 package main
 
 import (
-    "bufio"
-    "fmt"
-    "io"
-    "strings"
+	"bufio"
+	"bytes"
+	"io"
+	//"log"
+	"strings"
+
+	"github.com/sakeven/colorize"
 )
 
 func Render(data string) string {
-    bd := bufio.NewReader(strings.NewReader(data))
-    out := ""
-    for {
-        line, err := bd.ReadString('\n')
-        if err == io.EOF {
-            break
-        } else if err != nil {
-            return data
-        }
+	buf := bytes.NewBuffer(nil)
+	msg := colorize.NewWriter(buf)
+	msg.WriteString("\n")
 
-        line, err = parse(line)
+	bd := bufio.NewReader(strings.NewReader(data))
+	token := ""
+	for {
+		line, err := bd.ReadString('\n')
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return data
+		}
 
-        if line == "" {
-            continue
-        }
-        out += line + "\n"
-    }
+		token = parse(line, token, msg)
+	}
 
-    return out
+	return buf.String()
 }
 
-func parse(line string) (string, error) {
-    switch line[0] {
-    case '#':
-        return cmdName(line)
-    case '>':
-        return shortDesc(line)
-    case '-':
-        return exampleDesc(line)
-    case '`':
-        return example(line)
-    default:
-        return "", fmt.Errorf("error")
-    }
+const (
+	CmdName     = "cmd-name"
+	ShortDesc   = "short-desc"
+	ExampleDesc = "example-desc"
+	Example     = "example"
+)
 
-    return "", nil
+func parse(line string, prevToken string, msg *colorize.Writer) string {
+	token := ""
+
+	switch line[0] {
+	case '#':
+		// token = CmdName
+	case '>':
+		token = ShortDesc
+	case '-':
+		token = ExampleDesc
+	case '`':
+		token = Example
+	default:
+		// "", fmt.Errorf("error")
+	}
+
+	if token == "" {
+		return prevToken
+	}
+
+	if token != prevToken && prevToken != "" {
+		msg.WriteString("\n")
+	}
+
+	switch token {
+	case CmdName:
+		// cmdName(line, msg)
+	case ShortDesc:
+		shortDesc(line, msg)
+	case ExampleDesc:
+		exampleDesc(line, msg)
+	case Example:
+		example(line, msg)
+	default:
+		// "", fmt.Errorf("error")
+	}
+
+	return token
 }
 
-func cmdName(line string) (string, error) {
-    return strings.TrimSpace(line[1:]), nil
+func cmdName(line string, msg *colorize.Writer) {
+	title := strings.TrimSpace(line[1:]) + "\n"
+	msg.AddAttr(colorize.Blod)
+	msg.WriteString(title)
+	msg.ClearAttrs()
 }
 
-func shortDesc(line string) (string, error) {
-    return strings.TrimSpace(line[1:]), nil
+func shortDesc(line string, msg *colorize.Writer) {
+	desc := strings.TrimSpace(line[1:]) + "\n"
+	msg.AddAttr(colorize.Blod)
+	msg.WriteString(desc)
+	msg.ClearAttrs()
 }
 
-func exampleDesc(line string) (string, error) {
-    return strings.TrimSpace(line), nil
+func exampleDesc(line string, msg *colorize.Writer) {
+	desc := strings.TrimSpace(line) + "\n"
+	msg.Fore = colorize.GREEN
+	msg.AddAttr(colorize.Blod)
+	msg.WriteString(desc)
+	msg.ClearAttrs()
 }
 
-func example(line string) (string, error) {
-    return "\t" + strings.TrimSpace(line[1:len(line)-2]), nil
+func example(line string, msg *colorize.Writer) {
+	msg.WriteString("\t")
+	code := strings.TrimSpace(line[1:len(line)-2]) + "\n"
+	msg.AddAttr(colorize.Reverse)
+	msg.AddAttr(colorize.Blod)
+	msg.Fore = colorize.BLACK
+	msg.WriteString(code)
+	msg.ClearAttrs()
 }
