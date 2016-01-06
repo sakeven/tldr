@@ -45,7 +45,7 @@ func (c *Client) GetTldr(platform string, cmd string) (string, error) {
 }
 
 func (c *Client) GetIndex() (string, error) {
-	url := fmt.Sprintf("%s/index.json", remoteUrl)
+	url := fmt.Sprintf("http://tldr-pages.github.io/assets/index.json")
 
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
