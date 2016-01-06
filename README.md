@@ -1,9 +1,9 @@
-# tldr-go
+# tldr
 
 A go client of tldr
 
 ### Install
 
 ```go
-go install -o tldr
+go install
 ```
