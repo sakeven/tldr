@@ -1,25 +1,45 @@
 package main
 
 import (
-	"fmt"
-	"os"
+    "fmt"
+    "log"
+    "os"
+
+    "github.com/sakeven/tldr/client"
+    "github.com/sakeven/tldr/local"
 )
 
+var tldrCli = client.New()
+
 func usage() {
-	fmt.Println("Usage: tldr <cmd>")
+    fmt.Println("Usage: tldr <cmd>")
 }
 
 func main() {
-	if len(os.Args) != 2 {
-		usage()
-		return
-	}
+    if len(os.Args) != 2 {
+        usage()
+        return
+    }
 
-	cmd := os.Args[1]
-	rd, err := getTldr("common", cmd)
-	if err != nil {
-		os.Exit(1)
-	}
+    local.Init()
 
-	Render(rd)
+    cmd := os.Args[1]
+    platform := local.GetPlatform(cmd)
+    fmt.Printf("Platform: %s\n", platform)
+
+    data, err := getTldr(platform, cmd)
+    if err != nil {
+        log.Printf("%s\n", err)
+        os.Exit(1)
+    }
+
+    fmt.Printf(Render(data))
+}
+
+func getTldr(platform, cmd string) (string, error) {
+    data, err := local.GetTldr(platform, cmd)
+    if err == nil {
+        return data, nil
+    }
+    return tldrCli.GetTldr(platform, cmd)
 }
