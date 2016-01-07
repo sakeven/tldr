@@ -1,32 +1,49 @@
 package local
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
-
-	"github.com/sakeven/tldr/client"
 )
 
-func makeIndex() {
-	fmt.Printf("Please wait a second for init local cache\n")
+// UpdateIndex updates index.json and downloads all cmd-tldr
+func UpdateIndex() {
+	indexFile, err := os.Create(indexPath)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
+	index, err := tldrCli.GetIndex()
+	if err != nil {
+		log.Printf("Init index for tldr failed!")
+		os.Exit(1)
+	}
 
-	tldrCli := client.New()
+	indexFile.WriteString(index)
+
+	loadIndex()
+	buildIndex()
+}
+
+func buildIndex() {
+	fmt.Printf("Please wait a second for init local cache\n")
 
 	for _, cmd := range cmds.Cmds {
 		for _, p := range cmd.Platform {
-			data, err := tldrCli.GetTldr(p, cmd.Name)
-			if err != nil {
-				log.Println(err)
-			}
-			f, err := os.Create(tldrPath + "/" + p + "/" + cmd.Name)
-			if err != nil {
-				log.Printf("Can't create file %s/%s\n", tldrPath, cmd.Name)
-				return
-			}
-
-			f.WriteString(data)
+			// log.Println(p, cmd.Name)
+			UpdateCmd(p, cmd.Name)
 		}
 	}
+}
 
+func loadIndex() {
+	indexPath := fmt.Sprintf("%s/index.json", tldrPath)
+	indexFile, _ := os.Open(indexPath)
+
+	err := json.NewDecoder(indexFile).Decode(cmds)
+	if err != nil {
+		log.Printf("Decode index.json error %s\n", err)
+		os.Exit(1)
+	}
 }
