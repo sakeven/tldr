@@ -13,7 +13,7 @@ import (
 func Render(data string) string {
 	buf := bytes.NewBuffer(nil)
 	msg := colorize.NewWriter(buf)
-	msg.WriteString("\n")
+	//  msg.WriteString("\n")
 
 	bd := bufio.NewReader(strings.NewReader(data))
 	token := ""
@@ -43,7 +43,7 @@ func parse(line string, prevToken string, msg *colorize.Writer) string {
 
 	switch line[0] {
 	case '#':
-		// token = CmdName
+		token = CmdName
 	case '>':
 		token = ShortDesc
 	case '-':
@@ -64,7 +64,7 @@ func parse(line string, prevToken string, msg *colorize.Writer) string {
 
 	switch token {
 	case CmdName:
-		// cmdName(line, msg)
+		cmdName(line, msg)
 	case ShortDesc:
 		shortDesc(line, msg)
 	case ExampleDesc:
@@ -79,7 +79,7 @@ func parse(line string, prevToken string, msg *colorize.Writer) string {
 }
 
 func cmdName(line string, msg *colorize.Writer) {
-	title := strings.TrimSpace(line[1:]) + "\n"
+	title := strings.TrimSpace(line[1:]) + ":" + "\n"
 	msg.AddAttr(colorize.Blod)
 	msg.WriteString(title)
 	msg.ClearAttrs()

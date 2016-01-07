@@ -20,10 +20,11 @@ type Commands struct {
 var cmds = &Commands{}
 
 const (
-	Common = "common"
-	OSX    = "osx"
-	Linux  = "linux"
-	SunOS  = "sunos"
+	Common  = "common"
+	OSX     = "osx"
+	Linux   = "linux"
+	SunOS   = "sunos"
+	Default = "default"
 )
 
 // getOS gets user's operation system.
@@ -33,6 +34,8 @@ func getOS() string {
 		return OSX
 	case "linux":
 		return Linux
+	case "sunos":
+		return SunOS
 	}
 	return Common
 }
@@ -59,11 +62,16 @@ func GetTldr(platform, cmd string) (string, error) {
 	return string(data), err
 }
 
-func GetAllCmds() []string {
+func GetAllCmds(platform string) []string {
 	var cs []string
 	loadIndex()
 	for _, cmd := range cmds.Cmds {
-		cs = append(cs, cmd.Name)
+		for _, p := range cmd.Platform {
+			if p == platform || platform == Default {
+				cs = append(cs, cmd.Name)
+				break
+			}
+		}
 	}
 
 	return cs
