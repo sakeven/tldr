@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"strings"
 )
 
 type Command struct {
@@ -40,8 +41,8 @@ func getOS() string {
 	return Common
 }
 
-// GetPlatform returns cmd's platform
-func GetPlatform(cmd string) string {
+// GetCmdPlatform returns cmd's Platform
+func GetCmdPlatform(cmd string) string {
 	loadIndex()
 	for _, c := range cmds.Cmds {
 		if c.Name == cmd {
@@ -56,10 +57,18 @@ func GetPlatform(cmd string) string {
 	return ""
 }
 
-func GetTldr(platform, cmd string) (string, error) {
+func GetTldr(platform, cmd string) (data string, etag string, err error) {
 	cmdPath := fmt.Sprintf("%s/%s/%s", tldrPath, platform, cmd)
-	data, err := ioutil.ReadFile(cmdPath)
-	return string(data), err
+	b, err := ioutil.ReadFile(cmdPath)
+	if err != nil {
+		return "", "", err
+	}
+
+	meta := strings.SplitN(string(b), "\n", 2)
+	if len(meta) != 2 {
+		return "", "", fmt.Errorf("get local tldr error")
+	}
+	return meta[1], meta[0], err
 }
 
 func GetAllCmds(platform string) []string {
@@ -78,7 +87,17 @@ func GetAllCmds(platform string) []string {
 }
 
 func UpdateCmd(platform string, cmd string) {
-	data, err := tldrCli.GetTldr(platform, cmd)
+	_, etag, _ := GetTldr(platform, cmd)
+	updateCmd(platform, cmd, etag)
+
+}
+
+func updateCmd(platform string, cmd string, etag string) {
+	if ok, _ := tldrCli.IsExpired(platform, cmd, etag); !ok {
+		return
+	}
+
+	data, etag, err := tldrCli.GetTldr(platform, cmd)
 	if err != nil {
 		log.Println(err)
 	}
@@ -89,5 +108,8 @@ func UpdateCmd(platform string, cmd string) {
 		return
 	}
 
+	f.WriteString(etag + "\n")
 	f.WriteString(data)
+
+	return
 }

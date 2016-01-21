@@ -21,9 +21,14 @@ func UpdateIndex() {
 	}
 
 	indexFile.WriteString(index)
+	err = json.Unmarshal([]byte(index), &cmds)
+	if err != nil {
+		log.Println(err)
+		os.Exit(1)
+	}
 
-	loadIndex()
 	buildIndex()
+
 }
 
 func buildIndex() {
@@ -31,7 +36,7 @@ func buildIndex() {
 
 	for _, cmd := range cmds.Cmds {
 		for _, p := range cmd.Platform {
-			// log.Println(p, cmd.Name)
+			log.Printf("update cmds %s %s\n", p, cmd.Name)
 			UpdateCmd(p, cmd.Name)
 		}
 	}

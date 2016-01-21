@@ -51,8 +51,8 @@ func main() {
 		cmd = getRandomCmd(*fplatform)
 	}
 
-	if *fplatform == defaultPlatform {
-		*fplatform = local.GetPlatform(cmd)
+	if *fplatform == defaultPlatform && cmd != "" {
+		*fplatform = local.GetCmdPlatform(cmd)
 	}
 
 	if *fupdate {
@@ -66,6 +66,10 @@ func main() {
 	if *flist {
 		printAllCmds(*fplatform)
 		return
+	}
+
+	if cmd == "" {
+		os.Exit(0)
 	}
 
 	data, err := getTldr(*fplatform, cmd)
@@ -94,9 +98,13 @@ func getRandomCmd(platform string) string {
 }
 
 func getTldr(platform, cmd string) (string, error) {
-	data, err := local.GetTldr(platform, cmd)
+	data, _, err := local.GetTldr(platform, cmd)
 	if err == nil {
 		return data, nil
 	}
-	return tldrCli.GetTldr(platform, cmd)
+	fmt.Println(err)
+
+	data, _, err = tldrCli.GetTldr(platform, cmd)
+
+	return data, err
 }
